@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Training Attendance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #dbeafe, #f0fdfa);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 450px;
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header img {
+      width: 90px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+      color: #0f172a;
+    }
+
+    form input, form select, form button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
+    form button {
+      background-color: #16a34a;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    form button:hover {
+      background-color: #15803d;
+    }
+
+    .toast {
+      background-color: #10b981;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .success-icon {
+      text-align: center;
+      font-size: 40px;
+      color: #10b981;
+      display: none;
+      animation: pop 0.6s ease;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.2); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <img src="logo.png" alt="Logo">
+      <h1>🤖 AI Training - Attendance</h1>
+    </div>
+
+    <form id="attendanceForm">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="email" name="email" placeholder="Your Email" required>
+      <input type="text" name="phone" placeholder="Your Phone" required>
+      <input type="text" name="dept" placeholder="Department" required>
+      <select name="employeeType" required>
+        <option value="">Select Type</option>
+        <option value="Permanent (कायमस्वरूपी)">Permanent (कायमस्वरूपी)</option>
+        <option value="Contractual (कॉन्ट्रॅक्ट आधारित)">Contractual (कॉन्ट्रॅक्ट आधारित)</option>
+        <option value="Staff">Other</option>
+      </select>
+      <button type="submit">Submit Attendance</button>
+    </form>
+
+    <div class="success-icon" id="successIcon">✅</div>
+    <div class="toast" id="toastMsg">Attendance Recorded Successfully!</div>
+  </div>
+
+  <script>
+    const form = document.getElementById('attendanceForm');
+    const toast = document.getElementById('toastMsg');
+    const icon = document.getElementById('successIcon');
+    const todayKey = 'attendance_' + new Date().toISOString().split('T')[0];
+
+    function showToast(msg, success = true) {
+      toast.style.backgroundColor = success ? '#10b981' : '#ef4444';
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 4000);
+    }
+
+    if (localStorage.getItem(todayKey)) {
+      form.classList.add('disabled');
+      icon.style.display = 'block';
+      showToast("Attendance already recorded for today!");
+    }
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      if (localStorage.getItem(todayKey)) {
+        showToast("You already submitted attendance today!", false);
+        return;
+      }
+
+      const data = new FormData(form);
+      const name = encodeURIComponent(data.get('name'));
+      const email = encodeURIComponent(data.get('email'));
+      const phone = encodeURIComponent(data.get('phone'));
+      const dept = encodeURIComponent(data.get('dept'));
+      const empType = encodeURIComponent(data.get('employeeType'));
+
+      const url = `https://script.google.com/macros/s/AKfycbxH8fQGjCJpLACd6egbb1cdhHsvq2ayj9B2U7hKzSRRHGZ4X6QqG0Pfx6hxl03pTJ4f/exec?Name=${name}&Email=${email}&Phone=${phone}&Dept=${dept}&EmployeeType=${empType}`;
+
+      fetch(url, { method: "POST", redirect: "follow" })
+        .then(res => res.text())
+        .then(res => {
+          localStorage.setItem(todayKey, 'submitted');
+          form.reset();
+          form.classList.add('disabled');
+          icon.style.display = 'block';
+          showToast("Attendance Recorded Successfully!");
+        })
+        .catch(err => {
+          console.error(err);
+          showToast("Something went wrong!", false);
+        });
+    });
+  </script>
+
+</body>
+</html>
